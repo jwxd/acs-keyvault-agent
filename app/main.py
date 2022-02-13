@@ -85,22 +85,23 @@ class KeyVaultAgent(object):
         _logger.info('Parsing Service Principle env completed')
 
     def _get_client(self):
+        msi_timeout_seconds = os.getenv('MSI_TIMEOUT_SECONDS', None)
         if os.getenv("USE_MSI", "false").lower() == "true":
             _logger.info('Using MSI')
             if "MSI_CLIENT_ID" in os.environ:
                 msi_client_id = os.environ["MSI_CLIENT_ID"]
                 _logger.info('Using client_id: %s', msi_client_id)
-                credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, client_id=msi_client_id)
+                credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, client_id=msi_client_id, timeout=msi_timeout_seconds)
             elif "MSI_OBJECT_ID" in os.environ:
                 msi_object_id = os.environ["MSI_OBJECT_ID"]
                 _logger.info('Using object_id: %s', msi_object_id)
-                credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, object_id=msi_object_id)
+                credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, object_id=msi_object_id, timeout=msi_timeout_seconds)
             elif "MSI_RESOURCE_ID" in os.environ:
                 msi_resource_id = os.environ["MSI_RESOURCE_ID"]
                 _logger.info('Using resource_id: %s', msi_resource_id)
-                credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, msi_res_id=msi_resource_id)
+                credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, msi_res_id=msi_resource_id, timeout=msi_timeout_seconds)
             else:
-                credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME)
+                credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, timeout=msi_timeout_seconds)
         else:
             if os.getenv("USE_ENV", "false").lower() == "true":
                 self._parse_sp_env()
@@ -113,9 +114,9 @@ class KeyVaultAgent(object):
                 # refer _parse_sp_file, potentially we could have mi client id from sp
                 if self.user_assigned_identity_id != "":
                     _logger.info('Using client_id: %s', self.user_assigned_identity_id)
-                    credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, client_id=self.user_assigned_identity_id)
+                    credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, client_id=self.user_assigned_identity_id, timeout=msi_timeout_seconds)
                 else:
-                    credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME)
+                    credentials = MSIAuthentication(resource=VAULT_RESOURCE_NAME, timeout=msi_timeout_seconds)
             else:
                 authority = '/'.join([AZURE_AUTHORITY_SERVER.rstrip('/'), self.tenant_id])
                 _logger.info('Using authority: %s', authority)
