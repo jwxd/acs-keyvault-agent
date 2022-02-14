@@ -86,6 +86,8 @@ class KeyVaultAgent(object):
 
     def _get_client(self):
         msi_timeout_seconds = os.getenv('MSI_TIMEOUT_SECONDS', None)
+        if isinstance(msi_timeout_seconds, str) and msi_timeout_seconds.isdigit():
+            msi_timeout_seconds = int(msi_timeout_seconds)
         if os.getenv("USE_MSI", "false").lower() == "true":
             _logger.info('Using MSI')
             if "MSI_CLIENT_ID" in os.environ:
@@ -124,6 +126,7 @@ class KeyVaultAgent(object):
                 _logger.info('Using vault resource name: %s and client id: %s', VAULT_RESOURCE_NAME, self.client_id)
                 credentials = AdalAuthentication(context.acquire_token_with_client_credentials, VAULT_RESOURCE_NAME,
                                                  self.client_id, self.client_secret)
+        print("Creating KeyVaultClient..")
         return KeyVaultClient(credentials)
 
     def _get_tenant_id(self, tenant_id_from_config):
